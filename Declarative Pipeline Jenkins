@@ -1,0 +1,34 @@
+pipeline {
+    agent any
+    stages{
+        stage("Git Clone"){
+            steps{
+                git 'https://github.com/radheyzunjur/DevOps-Project-node-todo-cicd'
+            }
+        }
+        
+        stage("code build"){
+            steps{
+                 sh "docker build . -t devops-project-node-todo-cicd"
+            }
+        }
+        
+        stage("code push"){
+            steps{
+                withCredentials([usernamePassword(credentialsId:"dockerHub",passwordVariable:"dockerHubPass",usernameVariable:"dockerHubUser")]) {
+                sh "docker tag devops-project-node-todo-cicd ${env.dockerHubUser}/devops-project-node-todo-cicd:latest"
+                sh "docker login -u ${env.dockerHubUser} -p ${env.dockerHubPass}"
+                sh "docker push ${env.dockerHubUser}/devops-project-node-todo-cicd:latest"
+                }
+            }
+        }
+        
+        stage("code deploy"){
+            steps{
+                 sh "docker-compose down && docker-compose up -d"
+            }
+        }
+    
+    }
+    
+}
